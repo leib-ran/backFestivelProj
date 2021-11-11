@@ -23,7 +23,7 @@ exports.changeOne = (req, res) => {
     { id: req.body },
     { $set: req.body },
     (err, updateProduct) => {
-      err ? req.status(500).send(err) : res.send(updateProduct);
+      err ? res.status(500).send(err) : res.send(updateProduct);
     }
   );
 };

@@ -27,8 +27,10 @@ exports.postOne = async (req, res) => {
       const userItem = new usersModel({
         userEmail: req.body.userEmail,
         firstName: req.body.firstName,
+        items: [],
         lastName: "",
         country: "",
+        quanItems: 0,
         isFilledDetailsFirst: true,
       });
       userItem.save().then(() => {
@@ -47,12 +49,18 @@ exports.postOne = async (req, res) => {
 exports.login = (req, res) => {
   const user = new usersModel(req.body);
   usersModel
-    .find({ userEmail: user.userEmail })
+    .findOne({ userEmail: user.userEmail })
+    .populate("items.product")
     .exec()
     .then((user) => {
+      if (!user) {
+        console.log("shuki");
+        return res.status(400).json({
+          error: "The mail or passward are not correct",
+        });
+      }
       return res.status(200).json({
-        userEmail: req.body.userEmail,
-        firstName: user[0].firstName,
+        user,
       });
     })
     .catch((err) => {
@@ -67,7 +75,7 @@ exports.updateUser = (req, res) => {
     { userEmail: req.body.userEmail },
     { $set: req.body },
     (err, updateUser) => {
-      err ? req.status(500).send(err) : res.send(updateUser);
+      err ? res.status(500).send(err) : res.send(updateUser);
     }
   );
 };
@@ -76,4 +84,14 @@ exports.deleteOne = (req, res) => {
   usersModel.findOneAndDelete({ id: req.params.id }, (err) => {
     err ? err.send(err) : res.status(200).send({});
   });
+};
+
+exports.getItemsFromCart = (req, res) => {
+  usersModel
+    .find({ userEmail: req.body.userEmail })
+    .populate("items.product")
+    .exec()
+    .then((user) => {
+      return res.json(user);
+    });
 };

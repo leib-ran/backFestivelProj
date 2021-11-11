@@ -1,41 +1,39 @@
-const express = require("express");
+var express = require("express");
 const router = express.Router();
-const orderModel = require("../Models/order");
-require("../data/database");
-
-router.get("/", (req, res) => {
-  orderModel.find({}, function (err, orders) {
-    err ? res.status(500) : res.status(200).send(orders);
-  });
+const orderSchema = require("../Models/validation/orders");
+const orderController = require("../controller/orderController");
+var validator = require("express-joi-validation").createValidator({
+  passError: true,
 });
 
-router.get("/:id", (req, res) => {
-  orderModel.findOne({ id: req.params.id }, (err, orders) => {
-    err ? res.status(500).send("error") : res.status(200).send(orders);
-  });
-});
+const joiErrors = function (err, req, res, next) {
+  if (err && err.error && err.error.isJoi) {
+    // console.log(err.error)
+    const errors = [];
 
-router.post("/", (req, res) => {
-  const productItem = new orderModel(req.body);
-  productItem.save().then(() => {
-    res.send(productItem);
-  });
-});
+    err.error.details.forEach((err) => {
+      console.log(err);
+      const error = {};
+      error.field = err.message.split('"')[1];
+      error.message = err.message.split('" ')[1];
+      errors.push(error);
+    });
 
-router.put("/", (req, res) => {
-  orderModel.findOneAndUpdate(
-    { id: req.body.id },
-    { $set: req.body },
-    (err, updateOrder) => {
-      err ? req.status(500).send(err) : res.send(updateOrder);
-    }
-  );
-});
+    // we had a joi error, let's return a custom 400 json response
+    res.status(400).json(errors);
+  } else {
+    // pass on to another error handler
+    next(err);
+  }
+};
 
-router.delete("/:id", (req, res) => {
-  orderModel.findOneAndDelete({ id: req.params.id }, (err) => {
-    err ? err.send(err) : res.status(200).send({});
-  });
-});
+router.get("/", orderController.getOrder);
+
+router.post(
+  "/",
+  validator.body(orderSchema),
+  joiErrors,
+  orderController.oneOrder
+);
 
 module.exports = router;

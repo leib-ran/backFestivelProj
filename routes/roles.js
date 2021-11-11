@@ -28,7 +28,7 @@ router.put("/", (req, res) => {
     { id: req.body.id },
     { $set: req.body },
     (err, updateRole) => {
-      err ? req.status(500).send(err) : res.send(updateRole);
+      err ? res.status(500).send(err) : res.send(updateRole);
     }
   );
 });

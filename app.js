@@ -13,7 +13,8 @@ var orderRouter = require("./routes/order");
 var roleRouter = require("./routes/roles");
 var festivalRouter = require("./routes/festival");
 var categoryRouter = require("./routes/category");
-var cartRouter = require("./routes/cart");
+var subCategoryRouter = require("./routes/subcategory");
+
 var jwt = require("jsonwebtoken");
 var helmet = require("helmet");
 var app = express();
@@ -40,13 +41,14 @@ app.use("/festivals", festivalRouter);
 app.use("/users", usersRouter);
 app.use("/products", productRouter);
 app.use("/order", orderRouter);
+app.use("/subcategories", subCategoryRouter);
 app.use("/roles", roleRouter);
-app.use("/cart", cartRouter);
-
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
-});
+~(
+  // catch 404 and forward to error handler
+  app.use(function (req, res, next) {
+    next(createError(404));
+  })
+);
 
 // error handler
 app.use(function (err, req, res, next) {

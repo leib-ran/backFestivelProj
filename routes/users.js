@@ -11,4 +11,5 @@ router.get("/:id", userController.getOne);
 router.post("/", userController.postOne);
 router.put("/", userController.updateUser);
 router.delete("/:id", userController.deleteOne);
+router.post("/cart", userController.getItemsFromCart);
 module.exports = router;

@@ -4,13 +4,20 @@ const Schema = mongoose.Schema;
 
 const usersSchema = new Schema({
   id: Number,
-  cartId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "cart",
-  },
+  items: [
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "products",
+      },
+      quan: Number,
+    },
+  ],
+  quanItems: Number,
   roleId: Number,
   userName: String,
   firstName: String,
+  shippingDetails: Object,
   country: String,
   gendre: String,
   lastName: String,
