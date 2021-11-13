@@ -1,4 +1,7 @@
+const { token } = require("morgan");
 const usersModel = require("../Models/users");
+const generateToken = require("../Models/utils/genrateToken");
+const bcrypt = require("bcrypt");
 
 exports.getAll = (req, res) => {
   usersModel.find({}, function (err, users) {
@@ -17,24 +20,32 @@ exports.postOne = async (req, res) => {
   usersModel
     .find({ userEmail: userObj.userEmail })
     .exec()
-    .then((user) => {
+    .then(async (user) => {
       if (user.length >= 1) {
         return res.status(400).json({
           error: "Mail exists",
+        });
+      }
+      if (req.body.password.length < 6) {
+        return res.status(401).json({
+          error: "The password  should be at least 6 charcter",
         });
       }
 
       const userItem = new usersModel({
         userEmail: req.body.userEmail,
         firstName: req.body.firstName,
+        password: req.body.password,
         items: [],
         lastName: "",
         country: "",
         quanItems: 0,
         isFilledDetailsFirst: true,
       });
+      const token = generateToken(req.body.userEmail);
       userItem.save().then(() => {
         res.status(201).json({
+          token: token,
           messeage: "User created",
         });
       });
@@ -54,9 +65,8 @@ exports.login = (req, res) => {
     .exec()
     .then((user) => {
       if (!user) {
-        console.log("shuki");
         return res.status(400).json({
-          error: "The mail or passward are not correct",
+          error: "The mail or password  are not correct",
         });
       }
       return res.status(200).json({
@@ -64,6 +74,7 @@ exports.login = (req, res) => {
       });
     })
     .catch((err) => {
+      console.log(err);
       return res.status(500).json({
         error: err,
       });

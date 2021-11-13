@@ -15,7 +15,6 @@ var festivalRouter = require("./routes/festival");
 var categoryRouter = require("./routes/category");
 var subCategoryRouter = require("./routes/subcategory");
 
-var jwt = require("jsonwebtoken");
 var helmet = require("helmet");
 var app = express();
 app.use(helmet.contentSecurityPolicy());
