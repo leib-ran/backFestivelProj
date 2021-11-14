@@ -26,9 +26,30 @@ const usersSchema = new Schema({
   gender: String,
   phoneNumber: Number,
   userImage: String,
-  userEmail: String,
+  userEmail: {
+    type: String,
+    unique: true,
+    required: true,
+    lowercase: true,
+  },
   isFilledDetailsFirst: Boolean,
 });
+
+usersSchema.statics.findByCredentials = async (email, password) => {
+  const user = await User.findOne({ userEmail: email }).populate(
+    "items.product"
+  );
+  if (!user) {
+    throw new Error("cant login");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error("The password or the email are wrong");
+  }
+  return user;
+};
 
 usersSchema.pre("save", async function (next) {
   const user = this;
@@ -45,4 +66,6 @@ usersSchema.set("toJSON", {
     delete ret.__v;
   },
 });
-module.exports = mongoose.model("users", usersSchema);
+
+const User = mongoose.model("users", usersSchema);
+module.exports = User;

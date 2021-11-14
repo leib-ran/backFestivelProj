@@ -57,28 +57,17 @@ exports.postOne = async (req, res) => {
     });
 };
 
-exports.login = (req, res) => {
-  const user = new usersModel(req.body);
-  usersModel
-    .findOne({ userEmail: user.userEmail })
-    .populate("items.product")
-    .exec()
-    .then((user) => {
-      if (!user) {
-        return res.status(400).json({
-          error: "The mail or password  are not correct",
-        });
-      }
-      return res.status(200).json({
-        user,
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      return res.status(500).json({
-        error: err,
-      });
-    });
+exports.login = async (req, res) => {
+  try {
+    const user = await usersModel.findByCredentials(
+      req.body.userEmail,
+      req.body.password
+    );
+    res.send(user);
+  } catch (err) {
+    console.log(err);
+    res.status(400).send("Email or Passward arent correct");
+  }
 };
 
 exports.updateUser = (req, res) => {
