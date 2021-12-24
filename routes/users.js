@@ -5,11 +5,19 @@ const usersModel = require("../Models/users");
 const userController = require("../controller/usersControler");
 require("../data/database");
 
-router.get("/", userController.getAll);
+router
+  .route("/")
+  .get(userController.getAll)
+  .post(userController.createUser)
+  .put(userController.updateUser);
+
+router
+  .route("/user")
+  .get(userController.getUser)
+  .delete(userController.deleteOne);
+
+router.get("/islogin", userController.isLogin);
+router.route("/logout").get(userController.logout);
 router.post("/login", userController.login);
-router.get("/:id", userController.getOne);
-router.post("/", userController.postOne);
-router.put("/", userController.updateUser);
-router.delete("/:id", userController.deleteOne);
 router.post("/cart", userController.getItemsFromCart);
 module.exports = router;

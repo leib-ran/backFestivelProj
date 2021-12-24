@@ -1,9 +1,14 @@
 const categoryModal = require("../Models/category");
 
-exports.getAll = (req, res) => {
-  categoryModal.find({}, (err, categories) => {
-    err ? res.status(500) : res.status(200).send(categories);
-  });
+exports.getAll = async (req, res) => {
+  try {
+    const categories = await categoryModal.find().select("-_id");
+    return res.status(200).send(categories);
+  } catch {
+    res.status(500).json({
+      err: "Not Found any category",
+    });
+  }
 };
 
 exports.getOne = (req, res) => {

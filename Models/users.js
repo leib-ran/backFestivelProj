@@ -17,7 +17,10 @@ const usersSchema = new Schema({
   password: String,
   quanItems: Number,
   roleId: Number,
-  userName: String,
+  userName: {
+    type: String,
+    required: true,
+  },
   firstName: String,
   shippingDetails: Object,
   country: String,
@@ -42,7 +45,6 @@ usersSchema.statics.findByCredentials = async (email, password) => {
   if (!user) {
     throw new Error("cant login");
   }
-
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {

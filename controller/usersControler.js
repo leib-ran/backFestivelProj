@@ -1,33 +1,28 @@
 const { token } = require("morgan");
 const usersModel = require("../Models/users");
-const generateToken = require("../Models/utils/genrateToken");
+const tokenUtil = require("../Models/utils/tokenUtil");
 const bcrypt = require("bcrypt");
+const { json } = require("body-parser");
 
 exports.getAll = (req, res) => {
   usersModel.find({}, function (err, users) {
-    err ? res.status(550) : res.status(200).send(users);
+    err ? res.status(500) : res.status(200).send(users);
   });
 };
 
-exports.getOne = (req, res) => {
-  usersModel.findOne({ userEmail: req.params.userEmail }, (err, users) => {
-    err ? res.status(500).send("error") : res.status(200).send(users);
-  });
-};
-
-exports.postOne = async (req, res) => {
+exports.createUser = (req, res) => {
   const userObj = new usersModel(req.body);
   usersModel
     .find({ userEmail: userObj.userEmail })
     .exec()
-    .then(async (user) => {
+    .then((user) => {
       if (user.length >= 1) {
-        return res.status(400).json({
+        res.send({
           error: "Mail exists",
         });
       }
       if (req.body.password.length < 6) {
-        return res.status(401).json({
+        res.send({
           error: "The password  should be at least 6 charcter",
         });
       }
@@ -35,6 +30,7 @@ exports.postOne = async (req, res) => {
       const userItem = new usersModel({
         userEmail: req.body.userEmail,
         firstName: req.body.firstName,
+        userName: req.body.userName,
         password: req.body.password,
         items: [],
         lastName: "",
@@ -42,15 +38,23 @@ exports.postOne = async (req, res) => {
         quanItems: 0,
         isFilledDetailsFirst: true,
       });
-      const token = generateToken(req.body.userEmail);
-      userItem.save().then(() => {
-        res.status(201).json({
-          token: token,
-          messeage: "User created",
+
+      userItem
+        .save()
+        .then(() => {
+          res.status(201).json({
+            messeage: "User created",
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(401).json({
+            error: "The userEmail is required",
+          });
         });
-      });
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).json({
         error: err,
       });
@@ -63,18 +67,66 @@ exports.login = async (req, res) => {
       req.body.userEmail,
       req.body.password
     );
-    res.send(user);
+    const token = tokenUtil.generateToken(user._id);
+    res.cookie("jwt", token, { httpOnly: true, sameSite: "lax", secure: true });
+
+    res.status(200).json({ user });
+  } catch (err) {
+    res.status(401).send("Email or Passward arent correct");
+  }
+};
+
+exports.logout = (req, res) => {
+  try {
+    res.clearCookie("jwt");
+    console.log("ran");
+    res.status(200).json({
+      message: "signed out",
+    });
   } catch (err) {
     console.log(err);
-    res.status(400).send("Email or Passward arent correct");
+    res.status(200).json({
+      message: "signed out",
+    });
+  }
+};
+
+exports.getUser = async (req, res, next) => {
+  try {
+    const token = req.cookies.jwt;
+    const id = tokenUtil.GetToken(token);
+    const user = await usersModel.findOne({ _id: id }).select("-password -_id");
+    console.log(user);
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(401).json({ error: "unautharied user" });
+  }
+};
+
+exports.isLogin = async (req, res) => {
+  try {
+    const token = req.cookies.jwt;
+    console.log(token);
+    const id = tokenUtil.GetToken(token);
+    const user = await usersModel.findOne({ _id: id });
+    return res.status(200).json({
+      isLogin: true,
+    });
+  } catch {
+    console.log(req.cookies.jwt);
+    return res.status(401).json({
+      isLogin: false,
+    });
   }
 };
 
 exports.updateUser = (req, res) => {
+  console.log(req.body);
   usersModel.findOneAndUpdate(
     { userEmail: req.body.userEmail },
     { $set: req.body },
     (err, updateUser) => {
+      console.log(err);
       err ? res.status(500).send(err) : res.send(updateUser);
     }
   );
