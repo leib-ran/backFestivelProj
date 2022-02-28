@@ -1,3 +1,4 @@
+const { json } = require("body-parser");
 const productModel = require("../Models/product");
 require("../data/database");
 
@@ -22,34 +23,54 @@ function generateSort(req) {
   return sort;
 }
 
-exports.getAll = (req, res) => {
-  let sortBy = {};
-  const pattern = /[\w]*/;
-  const subcategoryId = req.query["subcategoryId"] || pattern;
-  const categoryId = req.query["categoryId"] || pattern;
-  if (getSortName(req)) {
-    sortBy = generateSort(req);
-  }
-
-  productModel
-    .find(
-      {
+exports.getAll = async (req, res) => {
+  try {
+    let sortBy = {};
+    const pattern = /[\w]*/;
+    const subcategoryId = req.query["subcategoryId"] || pattern;
+    const categoryId = req.query["categoryId"] || pattern;
+    const searchWord = req.query["q"]
+      ? new RegExp(`.*${req.query["q"]}.*`, "gi")
+      : pattern;
+    if (getSortName(req)) {
+      sortBy = generateSort(req);
+    }
+    const totalNumberProducts = await productModel
+      .find({
         categoryId,
         subcategoryId,
-      },
-      function (err, products) {
-        err ? res.status(500) : res.status(200).send(products);
-      }
-    )
-    .sort(sortBy)
-    .skip(9 * Number(req.query["_page"] - 1) || 0)
-    .limit(9);
+        title: searchWord,
+      })
+      .count();
+    console.log(2);
+    const products = await productModel
+      .find({
+        categoryId,
+        subcategoryId,
+        title: searchWord,
+      })
+      .sort(sortBy)
+      .skip(12 * Number(req.query["_page"] - 1) || 0)
+      .limit(12);
+    console.log(searchWord);
+    console.log(3);
+    res.status(200).json({ products, totalPages: totalNumberProducts });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "error" });
+  }
 };
 
-exports.getOne = (req, res) => {
-  productModel.findOne({ id: req.params.id }, (err, products) => {
-    err ? res.status(500).send("error") : res.status(200).send(products);
-  });
+exports.getOne = async (req, res) => {
+  try {
+    const product = await productModel
+      .findOne({ id: req.params.id })
+      .select("");
+
+    res.status(200).send(product);
+  } catch (err) {
+    res.status(500).send("error");
+  }
 };
 
 exports.postOne = (req, res) => {

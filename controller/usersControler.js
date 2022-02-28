@@ -79,7 +79,6 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
   try {
     res.clearCookie("jwt");
-    console.log("ran");
     res.status(200).json({
       message: "signed out",
     });
@@ -96,7 +95,6 @@ exports.getUser = async (req, res, next) => {
     const token = req.cookies.jwt;
     const id = tokenUtil.GetToken(token);
     const user = await usersModel.findOne({ _id: id }).select("-password -_id");
-    console.log(user);
     res.status(200).json(user);
   } catch (err) {
     res.status(401).json({ error: "unautharied user" });
@@ -113,7 +111,6 @@ exports.isLogin = async (req, res) => {
       isLogin: true,
     });
   } catch {
-    console.log(req.cookies.jwt);
     return res.status(401).json({
       isLogin: false,
     });
@@ -121,7 +118,6 @@ exports.isLogin = async (req, res) => {
 };
 
 exports.updateUser = (req, res) => {
-  console.log(req.body);
   usersModel.findOneAndUpdate(
     { userEmail: req.body.userEmail },
     { $set: req.body },
